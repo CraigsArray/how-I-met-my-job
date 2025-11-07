@@ -1,159 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>JSON → Netlify Classify</title>
-    <style>
-    :root {
-      --bg: #0f172a; /* slate-900 */
-      --panel: #111827; /* gray-900 */
-      --muted: #94a3b8; /* slate-400 */
-      --text: #e5e7eb; /* gray-200 */
-      --accent: #22c55e; /* green-500 */
-      --accent-2: #60a5fa; /* blue-400 */
-      --danger: #ef4444; /* red-500 */
-      --border: #1f2937; /* gray-800 */
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      background: radial-gradient(1200px 600px at 80% -10%, #1f2937 0%, var(--bg) 60%);
-      color: var(--text);
-      min-height: 100vh; display: grid; place-items: center; padding: 24px;
-    }
-    .card {
-      width: min(960px, 100%);
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      border: 1px solid var(--border);
-      border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    }
-    h1 { margin: 0 0 6px; font-size: 24px; letter-spacing: .3px; }
-    p.sub { margin: 0 0 16px; color: var(--muted); }
-    .row { display: grid; grid-template-columns: 1fr; gap: 14px; }
-    label { font-size: 14px; color: var(--muted); }
-    textarea, input[type="text"] {
-      width: 100%; min-height: 160px; resize: vertical;
-      background: #0b1220; color: var(--text);
-      border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      line-height: 1.4; font-size: 14px;
-    }
-    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    button {
-      appearance: none; border: 0; border-radius: 999px; padding: 10px 16px;
-      font-weight: 600; cursor: pointer; color: #081016; background: var(--accent);
-      transition: transform .06s ease, opacity .2s ease; box-shadow: 0 8px 20px rgba(34,197,94,.25);
-    }
-    button.secondary { background: #1f2937; color: var(--text); box-shadow: none; border: 1px solid var(--border); }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    .status { font-size: 13px; color: var(--muted); }
-    .row-2 { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 10px; }
-    pre {
-      margin: 0; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto; max-height: 360px;
-      background: #0b1220; border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; font-size: 13px;
-    }
-    .error { color: var(--danger); }
-    .hint { color: var(--muted); font-size: 12px; }
-    .footer { margin-top: 16px; display: flex; justify-content: space-between; align-items: center; }
-    .tag { font-size: 12px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); }
-    @media (min-width: 880px) {
-      .row { grid-template-columns: 1fr 1fr; }
-      textarea { min-height: 220px; }
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Match — Input Prototype with Classify Comparison</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<main class="card">
-    <h1>Classify JSON with a Netlify Function</h1>
-    <p class="sub">Paste JSON on the left and POST to <code>/.netlify/functions/classify-cv</code>. We'll render the response below.</p>
+<body class="bg-slate-50 text-slate-800">
+  <div class="max-w-5xl mx-auto p-6">
+    <header class="mb-6">
+      <h1 class="text-3xl font-bold">Job Match — Basic Input Form</h1>
+      <p class="text-slate-600 mt-1">Fill in resume and job fields. On submit, this page will send a single <span class="font-mono">POST</span> request with a JSON payload to your classify function (default: <span class="font-mono">/.netlify/functions/classify-cv</span>).</p>
+    </header>
 
-    <div class="row">
-        <section>
-            <label for="json-input">JSON input</label>
-            <textarea id="json-input" placeholder='{"text":"hello world"}'></textarea>
-            <div class="controls">
-                <button id="send">Run classify()</button>
-                <button id="prettify" class="secondary" title="Format JSON">Prettify</button>
-                <span id="status" class="status"></span>
-            </div>
-            <p id="json-error" class="error" style="display:none;"></p>
-        </section>
+    <section class="mb-6">
+      <div class="bg-white shadow-sm rounded-2xl p-4 border">
+        <label for="endpoint" class="block text-sm font-semibold mb-2">POST Endpoint</label>
+        <input id="endpoint" name="endpoint" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="/.netlify/functions/classify-cv" value="/.netlify/functions/classify-cv" />
+        <p class="text-xs text-slate-500 mt-2">Accepts either an absolute HTTPS URL (e.g., <span class="font-mono">https://api.example.com/classify</span>) or a relative path (e.g., <span class="font-mono">/.netlify/functions/classify-cv</span>).</p>
+      </div>
+    </section>
 
-        <section>
-            <label for="response-output">Response</label>
-            <pre id="response-output">(Nothing yet)</pre>
-            <div class="footer">
-                <span class="tag">POST → /\.netlify/functions/classify</span>
-                <span class="hint">Tip: your Netlify function must handle <code>Content-Type: application/json</code>.</span>
-            </div>
-        </section>
-    </div>
-</main>
+    <form id="jobMatchForm" class="space-y-6">
+      <section class="bg-white shadow-sm rounded-2xl p-4 border">
+        <h2 class="text-xl font-semibold mb-4">Resume Inputs</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="candidateName" class="block text-sm font-semibold mb-1">Candidate Name</label>
+            <input id="candidateName" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="Jane Doe" />
+          </div>
+          <div>
+            <label for="candidateEmail" class="block text-sm font-semibold mb-1">Candidate Email</label>
+            <input id="candidateEmail" type="email" class="w-full rounded-xl border px-3 py-2" placeholder="jane@example.com" />
+          </div>
+          <div class="md:col-span-2">
+            <label for="summary" class="block text-sm font-semibold mb-1">Professional Summary</label>
+            <textarea id="summary" rows="3" class="w-full rounded-xl border px-3 py-2" placeholder="Short professional overview..."></textarea>
+          </div>
+          <div class="md:col-span-2">
+            <label for="experience" class="block text-sm font-semibold mb-1">Experience</label>
+            <textarea id="experience" rows="4" class="w-full rounded-xl border px-3 py-2" placeholder="Job titles, employers, dates, responsibilities..."></textarea>
+          </div>
+          <div>
+            <label for="skills" class="block text-sm font-semibold mb-1">Skills (comma-separated)</label>
+            <input id="skills" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="Python, SQL, Tableau" />
+          </div>
+          <div>
+            <label for="certs" class="block text-sm font-semibold mb-1">Certifications</label>
+            <input id="certs" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="AWS SAA, PMP" />
+          </div>
+          <div>
+            <label for="education" class="block text-sm font-semibold mb-1">Education</label>
+            <input id="education" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="M.S. in Big Data Analytics, SDSU (2026)" />
+          </div>
+          <div>
+            <label for="projects" class="block text-sm font-semibold mb-1">Projects</label>
+            <input id="projects" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="Job-matching ML on Databricks; NLP resume parser" />
+          </div>
+        </div>
+      </section>
 
-<script>
-    const $ = (s) => document.querySelector(s);
-    const input = $("#json-input");
-    const output = $("#response-output");
-    const status = $("#status");
-    const jsonError = $("#json-error");
+      <section class="bg-white shadow-sm rounded-2xl p-4 border">
+        <h2 class="text-xl font-semibold mb-4">Job Listing Inputs</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="jobTitle" class="block text-sm font-semibold mb-1">Job Title</label>
+            <input id="jobTitle" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="Data Analyst" />
+          </div>
+          <div>
+            <label for="company" class="block text-sm font-semibold mb-1">Company</label>
+            <input id="company" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="Acme Corp" />
+          </div>
+          <div class="md:col-span-2">
+            <label for="jobDescription" class="block text-sm font-semibold mb-1">Job Description</label>
+            <textarea id="jobDescription" rows="4" class="w-full rounded-xl border px-3 py-2" placeholder="Paste job description text..."></textarea>
+          </div>
+          <div>
+            <label for="requiredSkills" class="block text-sm font-semibold mb-1">Required Skills (comma-separated)</label>
+            <input id="requiredSkills" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="Python, SQL" />
+          </div>
+          <div>
+            <label for="preferredSkills" class="block text-sm font-semibold mb-1">Preferred Skills (comma-separated)</label>
+            <input id="preferredSkills" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="Tableau, NLP" />
+          </div>
+          <div>
+            <label for="experienceLevel" class="block text-sm font-semibold mb-1">Experience Level</label>
+            <select id="experienceLevel" class="w-full rounded-xl border px-3 py-2">
+              <option value="unspecified">Unspecified</option>
+              <option value="entry">Entry</option>
+              <option value="mid">Mid</option>
+              <option value="senior">Senior</option>
+            </select>
+          </div>
+          <div>
+            <label for="educationRequirement" class="block text-sm font-semibold mb-1">Education Requirement</label>
+            <select id="educationRequirement" class="w-full rounded-xl border px-3 py-2">
+              <option value="unspecified">Unspecified</option>
+              <option value="hs">High School</option>
+              <option value="associate">Associate</option>
+              <option value="bachelor">Bachelor</option>
+              <option value="master">Master</option>
+              <option value="phd">PhD</option>
+            </select>
+          </div>
+          <div>
+            <label for="location" class="block text-sm font-semibold mb-1">Location</label>
+            <input id="location" type="text" class="w-full rounded-xl border px-3 py-2" placeholder="San Diego, CA or Remote" />
+          </div>
+          <div class="flex items-center gap-2 mt-6">
+            <input id="remote" type="checkbox" class="h-4 w-4" />
+            <label for="remote" class="text-sm font-semibold">Remote OK</label>
+          </div>
+        </div>
+      </section>
 
-    function setStatus(msg) { status.textContent = msg || ""; }
-    function setOutput(obj) {
-      try {
-        output.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
-      } catch { output.textContent = String(obj); }
-    }
+      <div class="flex items-center gap-3">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2 rounded-xl shadow">Classify</button>
+        <span id="status" class="text-sm"></span>
+      </div>
+    </form>
 
-    $("#prettify").addEventListener("click", () => {
-      try {
-        const parsed = JSON.parse(input.value || "{}");
-        input.value = JSON.stringify(parsed, null, 2);
-        jsonError.style.display = "none";
-      } catch (e) {
-        jsonError.textContent = "Invalid JSON: " + e.message;
-        jsonError.style.display = "block";
-      }
-    });
+    <section class="mt-6">
+      <div class="bg-white shadow-sm rounded-2xl p-4 border">
+        <h3 class="text-lg font-semibold mb-2">Request Preview</h3>
+        <pre id="preview" class="text-sm bg-slate-900 text-slate-100 p-4 rounded-xl overflow-x-auto"></pre>
+      </div>
+    </section>
 
-    $("#send").addEventListener("click", async () => {
-      jsonError.style.display = "none";
+    <!-- Cross-Reference Box -->
+    <section class="mt-10">
+      <div class="bg-white shadow-sm rounded-2xl p-4 border">
+        <h2 class="text-xl font-semibold mb-4">POST Method Cross-Reference</h2>
+        <p class="text-sm text-slate-600 mb-3">Use this area to test raw JSON POST requests (similar to Netlify classify). Paste JSON and compare responses with the form above.</p>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold mb-1" for="json-input">JSON Input</label>
+            <textarea id="json-input" class="w-full rounded-xl border px-3 py-2 bg-slate-900 text-white" rows="10" placeholder='{"text": "example data"}'></textarea>
+            <button id="json-send" class="mt-3 bg-green-500 hover:bg-green-600 text-white font-semibold px-5 py-2 rounded-xl shadow">Send JSON</button>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1" for="json-output">Response</label>
+            <pre id="json-output" class="w-full rounded-xl border px-3 py-2 bg-slate-900 text-white overflow-x-auto">(Nothing yet)</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 
-      let bodyObj;
-      try {
-        bodyObj = input.value.trim() ? JSON.parse(input.value) : {};
-      } catch (e) {
-        jsonError.textContent = "Invalid JSON: " + e.message;
-        jsonError.style.display = "block";
+  <script>
+    const form = document.getElementById('jobMatchForm');
+    const statusEl = document.getElementById('status');
+    const previewEl = document.getElementById('preview');
+
+    function getVal(id) { return document.getElementById(id).value.trim(); }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = '';
+
+      const endpoint = getVal('endpoint');
+      if (!endpoint || !(endpoint.startsWith('https://') || endpoint.startsWith('/'))) {
+        statusEl.textContent = 'Provide a valid endpoint (absolute https://… or relative /.netlify/functions/…).';
+        statusEl.className = 'text-sm text-red-600';
         return;
       }
 
-      setStatus("Sending...");
-      setOutput("Awaiting response...");
+      const payload = {
+        resume: {
+          name: getVal('candidateName'),
+          email: getVal('candidateEmail'),
+          summary: getVal('summary'),
+          experience: getVal('experience'),
+          skills: getVal('skills').split(',').map(s => s.trim()).filter(Boolean),
+          certifications: getVal('certs').split(',').map(s => s.trim()).filter(Boolean),
+          education: getVal('education'),
+          projects: getVal('projects')
+        },
+        job: {
+          title: getVal('jobTitle'),
+          company: getVal('company'),
+          description: getVal('jobDescription'),
+          requiredSkills: getVal('requiredSkills').split(',').map(s => s.trim()).filter(Boolean),
+          preferredSkills: getVal('preferredSkills').split(',').map(s => s.trim()).filter(Boolean),
+          experienceLevel: document.getElementById('experienceLevel').value,
+          educationRequirement: document.getElementById('educationRequirement').value,
+          location: getVal('location'),
+          remote: document.getElementById('remote').checked
+        },
+        meta: { submittedAt: new Date().toISOString() }
+      };
+
+      previewEl.textContent = JSON.stringify(payload, null, 2);
 
       try {
-        const response = await fetch("/.netlify/functions/classify-cv", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const text = await res.text();
+        const responseJSON = (() => { try { return JSON.parse(text); } catch { return text; }})();
+
+        statusEl.textContent = res.ok ? 'Success' : `Error ${res.status}`;
+        statusEl.className = res.ok ? 'text-sm text-green-700' : 'text-sm text-red-600';
+
+        previewEl.textContent = JSON.stringify({ sent: payload, response: responseJSON }, null, 2);
+      } catch (err) {
+        statusEl.textContent = 'Network error: ' + err.message;
+        statusEl.className = 'text-sm text-red-600';
+      }
+    });
+
+    // JSON test box logic
+    document.getElementById('json-send').addEventListener('click', async () => {
+      const endpoint = getVal('endpoint');
+      const input = document.getElementById('json-input').value;
+      const output = document.getElementById('json-output');
+      output.textContent = '(Sending...)';
+      try {
+        const bodyObj = input.trim() ? JSON.parse(input) : {};
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(bodyObj)
         });
-
-        const text = await response.text();
-        try {
-          const json = JSON.parse(text);
-          setOutput(json);
-        } catch {
-          setOutput(text);
-        }
-
-        if (!response.ok) {
-          setStatus(`Error ${response.status}`);
-        } else {
-          setStatus("Done");
-        }
-      } catch (err) {
-        setStatus("Network error");
-        setOutput(String(err));
+        const text = await res.text();
+        output.textContent = text;
+      } catch (e) {
+        output.textContent = 'Error: ' + e.message;
       }
     });
   </script>
